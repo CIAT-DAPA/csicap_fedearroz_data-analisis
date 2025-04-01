@@ -2,7 +2,7 @@
 ## CSICAP - Satellite products evaluation
 ## By: Harold Achicanoy
 ## Alliance Bioversity CIAT
-## Nov. 2024
+## March 2025
 ## ------------------------------------------ ##
 
 options(warn = -1, scipen = 999)
@@ -20,12 +20,12 @@ outd <- paste0(root,'/7.Results/CSICAP')
 
 ## Load observed data ----
 ### IDEAM data ----
-if(file.exists(file.path(outd,'ideam_prec_monthly.parquet'))|file.exists(file.path(outd,'ideam_feat_stations.parquet'))){
-  ideam_mnt <- arrow::read_parquet(file = file.path(outd,'ideam_prec_monthly.parquet')) |> base::as.data.frame()
-  ideam_unq <- arrow::read_parquet(file = file.path(outd,'ideam_feat_stations.parquet')) |> base::as.data.frame()
+if (file.exists(file.path(outd,'data/processed/ideam/ideam_prec_monthly.parquet'))|file.exists(file.path(outd,'data/processed/ideam/ideam_feat_stations.parquet'))) {
+  ideam_mnt <- arrow::read_parquet(file = file.path(outd,'data/processed/ideam/ideam_prec_monthly.parquet')) |> base::as.data.frame()
+  ideam_unq <- arrow::read_parquet(file = file.path(outd,'data/processed/ideam/ideam_feat_stations.parquet')) |> base::as.data.frame()
 } else {
   # Loading IDEAM data
-  ideam <- arrow::read_parquet(file = file.path(outd,'df_final_georeferencias.parquet'))
+  ideam <- arrow::read_parquet(file = file.path(outd,'data/raw/ideam/df_final_georeferencias.parquet'))
   ideam <- ideam |> dplyr::arrange(codigo_estacion, fecha)
   # IDEAM data into data.table format
   ideamDT <- data.table::setDT(x = ideam)
@@ -51,15 +51,9 @@ if(file.exists(file.path(outd,'ideam_prec_monthly.parquet'))|file.exists(file.pa
   ideam_unq$longitude <- as.numeric(ideam_unq$longitude)
   ideam_unq$latitude <- as.numeric(ideam_unq$latitude)
   ideam_unq$altitud <- as.numeric(ideam_unq$altitud)
-  # # Plotting 10 random stations
-  # ideam_mnt |>
-  #   dplyr::filter(codigo_estacion %in% sample(x = ideam_unq$codigo_estacion, size = 10)) |>
-  #   ggplot2::ggplot(aes(x = fecha, y = valor_observado, group = codigo_estacion)) +
-  #   ggplot2::geom_line(alpha = 0.1, show.legend = F) +
-  #   ggplot2::theme_minimal()
   # Save monthly data
-  arrow::write_parquet(x = ideam_mnt, sink = file.path(outd,'ideam_prec_monthly.parquet'), version = 'latest')
-  arrow::write_parquet(x = ideam_unq, sink = file.path(outd,'ideam_feat_stations.parquet'), version = 'latest')
+  arrow::write_parquet(x = ideam_mnt, sink = file.path(outd,'data/processed/ideam/ideam_prec_monthly.parquet'), version = 'latest')
+  arrow::write_parquet(x = ideam_unq, sink = file.path(outd,'data/processed/ideam/ideam_feat_stations.parquet'), version = 'latest')
   rm(ideam, ideamDT); gc(T)
 }
 ideam_unq <- ideam_unq[,c(c('longitude','latitude'),base::setdiff(names(ideam_unq),c('longitude','latitude')))]
@@ -67,11 +61,11 @@ names(ideam_unq)[3] <- 'station'
 names(ideam_mnt)[2] <- 'station'
 
 ### Fedearroz data ----
-if(file.exists(file.path(outd,'fedearroz_prec_monthly.parquet'))|file.exists(file.path(outd,'fedearroz_feat_stations.parquet'))){
-  fdrrz_mnt <- arrow::read_parquet(file = file.path(outd,'fedearroz_prec_monthly.parquet')) |> base::as.data.frame()
-  fdrrz_unq <- arrow::read_parquet(file = file.path(outd,'fedearroz_feat_stations.parquet')) |> base::as.data.frame()
+if (file.exists(file.path(outd,'data/processed/fedearroz/fedearroz_prec_monthly.parquet'))|file.exists(file.path(outd,'data/processed/fedearroz/fedearroz_feat_stations.parquet'))) {
+  fdrrz_mnt <- arrow::read_parquet(file = file.path(outd,'data/processed/fedearroz/fedearroz_prec_monthly.parquet')) |> base::as.data.frame()
+  fdrrz_unq <- arrow::read_parquet(file = file.path(outd,'data/processed/fedearroz/fedearroz_feat_stations.parquet')) |> base::as.data.frame()
 } else {
-  fdrrz_mnt <- readxl::read_excel(path = file.path(outd,'prec_monthly_obs_sat.xlsx'), sheet = 1) |> base::as.data.frame()
+  fdrrz_mnt <- readxl::read_excel(path = file.path(outd,'data/raw/fedearroz/prec_monthly_obs_sat.xlsx'), sheet = 1) |> base::as.data.frame()
   fdrrz_mnt <- fdrrz_mnt[,-1]
   fdrrz_mnt <- fdrrz_mnt[fdrrz_mnt$fuente == 'fedearroz',]; rownames(fdrrz_mnt) <- 1:nrow(fdrrz_mnt)
   fdrrz_mnt$fuente <- NULL
@@ -79,8 +73,109 @@ if(file.exists(file.path(outd,'fedearroz_prec_monthly.parquet'))|file.exists(fil
   fdrrz_mnt <- fdrrz_mnt[,c('month_year','station','prec_month')]
   names(fdrrz_mnt) <- c('fecha','station','valor_observado')
   fdrrz_mnt$fecha <- as.Date(paste0(fdrrz_mnt$fecha,'-01'))
-  arrow::write_parquet(x = fdrrz_mnt, sink = file.path(outd,'fedearroz_prec_monthly.parquet'), version = 'latest')
-  arrow::write_parquet(x = fdrrz_unq, sink = file.path(outd,'fedearroz_feat_stations.parquet'), version = 'latest')
+  arrow::write_parquet(x = fdrrz_mnt, sink = file.path(outd,'data/processed/fedearroz/fedearroz_prec_monthly.parquet'), version = 'latest')
+  arrow::write_parquet(x = fdrrz_unq, sink = file.path(outd,'data/processed/fedearroz/fedearroz_feat_stations.parquet'), version = 'latest')
+}
+
+### Cenicafe data ----
+if (file.exists(file.path(outd,'data/processed/cenicafe/cenicafe_prec_monthly.parquet'))|file.exists(file.path(outd,'data/processed/cenicafe/cenicafe_feat_stations.parquet'))) {
+  cencf_mnt <- arrow::read_parquet(file = file.path(outd,'data/processed/cenicafe/cenicafe_prec_monthly.parquet')) |> base::as.data.frame()
+  cencf_unq <- arrow::read_parquet(file = file.path(outd,'data/processed/cenicafe/cenicafe_feat_stations.parquet')) |> base::as.data.frame()
+} else {
+  cencf <- data.table::fread(file.path(outd,'data/raw/cenicafe/Cenicafe_lluvia-diaria_20240806.csv'), encoding = 'Latin-1') |> base::as.data.frame()
+  cencf <- cencf |> dplyr::arrange(COD_ESTACION, FECHA)
+  cencf$VALOR[which(cencf$VALOR == '')] <- NA
+  cencf$VALOR <- gsub(pattern = ',',replacement = '.',x = cencf$VALOR) |> as.numeric()
+  # IDEAM data into data.table format
+  cencfDT <- data.table::setDT(x = cencf)
+  cencfDT[,month:=lubridate::month(FECHA)]
+  cencfDT[,year:=lubridate::year(FECHA)]
+  cencfDT[,key:=paste0(year,'-',sprintf('%02d',month),'-01','__',COD_ESTACION)]
+  # Compute monthly values
+  system.time(expr = {
+    cencfDT_mnt <- cencfDT[,valor_observado:=sum(VALOR, na.rm = T), by = key]
+    cencfDT_NAs <- cencfDT[,faltantes:=sum(is.na(VALOR)), by = key]
+  }); rm(cencfDT_NAs)
+  cencf_mnt <- base::as.data.frame(cencfDT_mnt); rm(cencfDT_mnt)
+  cencf_mnt$valor_observado[which(cencf_mnt$faltantes >= 4)] <- NA
+  cencf_mnt <- cencf_mnt |>
+    dplyr::select(key, valor_observado, faltantes) |>
+    base::unique() |>
+    tidyr::separate(col = key, into = c('fecha','station'), sep = '__', remove = F)
+  cencf_mnt$station <- as.character(cencf_mnt$station)
+  cencf_mnt$fecha <- as.Date(cencf_mnt$fecha)
+  cencf_mnt$key <- NULL
+  cencf_mnt <- cencf_mnt |>
+    dplyr::arrange(station, fecha) |>
+    base::as.data.frame()
+  cencf_mnt$faltantes <- NULL
+  # Unique station's features
+  cencf_unq <- cencf |>
+    dplyr::select(COD_ESTACION,NOMBRE,DEPARTAMENTO,MUNICIPIO,
+                  TES_CODIGO,NOM_VARIABLE) |>
+    base::unique() |>
+    base::as.data.frame()
+  names(cencf_unq) <- c('station','nombre','departamento','municipio','tes_codigo','nom_variable')
+  cencf_unq$station <- as.character(cencf_unq$station)
+  cencf_crd <- utils::read.csv(file.path(outd,'data/raw/cenicafe/Catalogo_precipitacion.csv'))
+  names(cencf_crd) <- tolower(names(cencf_crd))
+  names(cencf_crd)[1] <- 'station'
+  cencf_crd$station <- as.character(cencf_crd$station)
+  cencf_crd <- cencf_crd[cencf_crd$nom_variable == 'Precipitación acumulada día',]
+  
+  cencf_unq <- dplyr::left_join(x = cencf_unq,
+                                y = cencf_crd |> dplyr::select(station, nombre, longitud, latitud, altura, corriente, estado, cat.inicial, cat.final, fech_inicio, fech_ult, años, n_registros_diarios),
+                                by = c('station','nombre'))
+  rm(cencf_crd)
+  names(cencf_unq)[9] <- 'altitud'
+  
+  cencf_unq <- cencf_unq[,c('longitud','latitud','station',base::setdiff(names(cencf_unq),c('longitud','latitud','station')))] |> unique()
+  arrow::write_parquet(x = cencf_mnt, sink = file.path(outd,'data/processed/cenicafe/cenicafe_prec_monthly.parquet'), version = 'latest')
+  arrow::write_parquet(x = cencf_unq, sink = file.path(outd,'data/processed/cenicafe/cenicafe_feat_stations.parquet'), version = 'latest')
+}
+
+### IDEAM new data ----
+if (file.exists(file.path(outd,'data/processed/ideam/ideamnew_prec_monthly.parquet'))|file.exists(file.path(outd,'data/processed/ideam/ideamnew_feat_stations.parquet'))) {
+  ideamnew_mnt <- arrow::read_parquet(file = file.path(outd,'data/processed/ideam/ideamnew_prec_monthly.parquet')) |> base::as.data.frame()
+  ideamnew_unq <- arrow::read_parquet(file = file.path(outd,'data/processed/ideam/ideamnew_feat_stations.parquet')) |> base::as.data.frame()
+} else {
+  # Loading IDEAM data
+  ideamnew <- utils::read.csv(file.path(outd,'data/raw/ideam/missing_station_filter.csv'))
+  ideamnew <- ideamnew[,3:ncol(ideamnew)]
+  ideamnew$fecha <- as.Date(ideamnew$fecha)
+  ideamnew <- ideamnew |> dplyr::arrange(codigo, fecha)
+  ideamnew$month <- lubridate::month(ideamnew$fecha)
+  ideamnew$year <- lubridate::year(ideamnew$fecha)
+  ideamnew$key <- paste0(ideamnew$year,'-',sprintf('%02d',ideamnew$month),'-01','__',ideamnew$codigo)
+  # Compute monthly values
+  ideamnew_mnt <- ideamnew |>
+    dplyr::select(key, precipitacion) |>
+    dplyr::group_by(key) |>
+    dplyr::summarise(valor_observado = sum(precipitacion)) |>
+    dplyr::ungroup() |>
+    base::as.data.frame()
+  ideamnew_mnt <- ideamnew_mnt |>
+    tidyr::separate(col = key, into = c('fecha','codigo_estacion'), sep = '__', remove = F)
+  ideamnew_mnt$codigo_estacion <- as.character(ideamnew_mnt$codigo_estacion)
+  ideamnew_mnt$fecha <- as.Date(ideamnew_mnt$fecha)
+  ideamnew_mnt$key <- NULL
+  names(ideamnew_mnt)[2] <- 'station'
+  # Unique station's features
+  ideamnew_unq <- ideamnew |>
+    dplyr::select(codigo,nombre,departamento,municipio,
+                  latitud,longitud,altitud) |>
+    unique() |>
+    base::as.data.frame()
+  ideamnew_unq$longitude <- as.numeric(ideamnew_unq$longitud); ideamnew_unq$longitud <- NULL
+  ideamnew_unq$latitude <- as.numeric(ideamnew_unq$latitud); ideamnew_unq$latitud <- NULL
+  ideamnew_unq$altitude <- as.numeric(ideamnew_unq$altitud); ideamnew_unq$altitud <- NULL
+  names(ideamnew_unq)[1] <- 'station'
+  ideamnew_unq$station <- as.character(ideamnew_unq$station)
+  ideamnew_unq <- ideamnew_unq[,c('longitude','latitude','station','nombre','departamento','municipio','altitude')]
+  # Save monthly data
+  arrow::write_parquet(x = ideamnew_mnt, sink = file.path(outd,'data/processed/ideam/ideamnew_prec_monthly.parquet'), version = 'latest')
+  arrow::write_parquet(x = ideamnew_unq, sink = file.path(outd,'data/processed/ideam/ideamnew_feat_stations.parquet'), version = 'latest')
+  rm(ideamnew); gc(F,T,T)
 }
 
 # Mapping altitude
@@ -132,17 +227,37 @@ extract_satellite_data <- function(crds = ideam_unq, Data = ideam_mnt){
   Data_final <- tbls |> purrr::reduce(dplyr::left_join, by = c('fecha','station'))
   return(Data_final)
 }
-if(!file.exists(file.path(outd,'ideam_prec_monthly_merged.parquet'))|
-   !file.exists(file.path(outd,'fedearroz_prec_monthly_merged.parquet'))){
+# Get satellite data for IDEAM
+if(!file.exists(file.path(outd,'data/processed/ideam/ideam_prec_monthly_merged.parquet'))){
   ideam_mrg <- extract_satellite_data(crds = ideam_unq, Data = ideam_mnt)
   ideam_mrg$IMERG <- ideam_mrg$IMERG * 730.5 # To get mm/month instead of mm/hr
+  arrow::write_parquet(x = ideam_mrg, sink = file.path(outd,'ideam_prec_monthly_merged.parquet'), version = 'latest')
+} else {
+  ideam_mrg <- arrow::read_parquet(file.path(outd,'data/processed/ideam/ideam_prec_monthly_merged.parquet'))
+}
+# Get satellite data for Fedearroz
+if(!file.exists(file.path(outd,'data/processed/fedearroz/fedearroz_prec_monthly_merged.parquet'))){
   fdrrz_mrg <- extract_satellite_data(crds = fdrrz_unq, Data = fdrrz_mnt)
   fdrrz_mrg$IMERG <- fdrrz_mrg$IMERG * 730.5 # To get mm/month instead of mm/hr
-  arrow::write_parquet(x = ideam_mrg, sink = file.path(outd,'ideam_prec_monthly_merged.parquet'), version = 'latest')
   arrow::write_parquet(x = fdrrz_mrg, sink = file.path(outd,'fedearroz_prec_monthly_merged.parquet'), version = 'latest')
 } else {
-  ideam_mrg <- arrow::read_parquet(file.path(outd,'ideam_prec_monthly_merged.parquet'))
-  fdrrz_mrg <- arrow::read_parquet(file.path(outd,'fedearroz_prec_monthly_merged.parquet'))
+  fdrrz_mrg <- arrow::read_parquet(file.path(outd,'data/processed/fedearroz/fedearroz_prec_monthly_merged.parquet'))
+}
+# Get satellite data for Cenicafe
+if(!file.exists(file.path(outd,'data/processed/cenicafe/cenicafe_prec_monthly_merged.parquet'))){
+  cencf_mrg <- extract_satellite_data(crds = cencf_unq, Data = cencf_mnt)
+  cencf_mrg$IMERG <- cencf_mrg$IMERG * 730.5 # To get mm/month instead of mm/hr
+  arrow::write_parquet(x = cencf_mrg, sink = file.path(outd,'data/processed/cenicafe/cenicafe_prec_monthly_merged.parquet'), version = 'latest')
+} else {
+  cencf_mrg <- arrow::read_parquet(file.path(outd,'data/processed/cenicafe/cenicafe_prec_monthly_merged.parquet'))
+}
+# Get satellite data for IDEAM new
+if(!file.exists(file.path(outd,'data/processed/ideam/ideamnew_prec_monthly_merged.parquet'))){
+  ideamnew_mrg <- extract_satellite_data(crds = ideamnew_unq, Data = ideamnew_mnt)
+  ideamnew_mrg$IMERG <- ideamnew_mrg$IMERG * 730.5 # To get mm/month instead of mm/hr
+  arrow::write_parquet(x = ideamnew_mrg, sink = file.path(outd,'data/processed/ideam/ideamnew_prec_monthly_merged.parquet'), version = 'latest')
+} else {
+  ideamnew_mrg <- arrow::read_parquet(file.path(outd,'data/processed/ideam/ideamnew_prec_monthly_merged.parquet'))
 }
 
 ## Evaluation metrics ----
@@ -368,62 +483,118 @@ stllts_evaluation <- function(Data = ideam_mrg, analysis = 'general_mth'){
 }
 
 # IDEAM
-if(!file.exists(file.path(outd,'ideam_evaluation_year-month_general.parquet'))){
+if(!file.exists(file.path(outd,'results/ideam/ideam_evaluation_year-month_general.parquet'))){
   ideam_general_mth <- stllts_evaluation(Data = ideam_mrg, analysis = 'general_mth')
-  arrow::write_parquet(x = ideam_general_mth, sink = file.path(outd,'ideam_evaluation_year-month_general.parquet'), version = 'latest')
+  arrow::write_parquet(x = ideam_general_mth, sink = file.path(outd,'results/ideam/ideam_evaluation_year-month_general.parquet'), version = 'latest')
 } else {
-  ideam_general_mth <- arrow::read_parquet(file = file.path(outd,'ideam_evaluation_year-month_general.parquet'))
+  ideam_general_mth <- arrow::read_parquet(file = file.path(outd,'results/ideam/ideam_evaluation_year-month_general.parquet'))
 }
-if(!file.exists(file.path(outd,'ideam_evaluation_year-quarter_general.parquet'))){
+if(!file.exists(file.path(outd,'results/ideam/ideam_evaluation_year-quarter_general.parquet'))){
   ideam_general_qrt <- stllts_evaluation(Data = ideam_mrg, analysis = 'general_qrt')
-  arrow::write_parquet(x = ideam_general_qrt, sink = file.path(outd,'ideam_evaluation_year-quarter_general.parquet'), version = 'latest')
+  arrow::write_parquet(x = ideam_general_qrt, sink = file.path(outd,'results/ideam/ideam_evaluation_year-quarter_general.parquet'), version = 'latest')
 } else {
-  ideam_general_qrt <- arrow::read_parquet(file.path(outd,'ideam_evaluation_year-quarter_general.parquet'))
+  ideam_general_qrt <- arrow::read_parquet(file.path(outd,'results/ideam/ideam_evaluation_year-quarter_general.parquet'))
 }
-if(!file.exists(file.path(outd,'ideam_evaluation_per-month.parquet'))){
+if(!file.exists(file.path(outd,'results/ideam/ideam_evaluation_per-month.parquet'))){
   ideam_per_mth <- stllts_evaluation(Data = ideam_mrg, analysis = 'per_mth')
   ideam_per_mth$filter <- factor(x = ideam_per_mth$filter, levels = unique(ideam_per_mth$filter))
-  arrow::write_parquet(x = ideam_per_mth, sink = file.path(outd,'ideam_evaluation_per-month.parquet'), version = 'latest')
+  arrow::write_parquet(x = ideam_per_mth, sink = file.path(outd,'results/ideam/ideam_evaluation_per-month.parquet'), version = 'latest')
 } else {
-  ideam_per_mth <- arrow::read_parquet(file.path(outd,'ideam_evaluation_per-month.parquet'))
+  ideam_per_mth <- arrow::read_parquet(file.path(outd,'results/ideam/ideam_evaluation_per-month.parquet'))
 }
-if(!file.exists(file.path(outd,'ideam_evaluation_per-quarter.parquet'))){
+if(!file.exists(file.path(outd,'results/ideam/ideam_evaluation_per-quarter.parquet'))){
   ideam_per_qrt <- stllts_evaluation(Data = ideam_mrg, analysis = 'per_qrt')
   ideam_per_qrt$filter <- factor(x = ideam_per_qrt$filter, levels = c('EFM','AMJ','JAS','OND'))
-  arrow::write_parquet(x = ideam_per_qrt, sink = file.path(outd,'ideam_evaluation_per-quarter.parquet'), version = 'latest')
+  arrow::write_parquet(x = ideam_per_qrt, sink = file.path(outd,'results/ideam/ideam_evaluation_per-quarter.parquet'), version = 'latest')
 } else {
-  ideam_per_qrt <- arrow::read_parquet(file.path(outd,'ideam_evaluation_per-quarter.parquet'))
+  ideam_per_qrt <- arrow::read_parquet(file.path(outd,'results/ideam/ideam_evaluation_per-quarter.parquet'))
 }
 
 # Fedearroz
-if(!file.exists(file.path(outd,'fedearroz_evaluation_year-month_general.parquet'))){
+if(!file.exists(file.path(outd,'results/fedearroz/fedearroz_evaluation_year-month_general.parquet'))){
   fdrrz_general_mth <- stllts_evaluation(Data = fdrrz_mrg, analysis = 'general_mth')
-  arrow::write_parquet(x = fdrrz_general_mth, sink = file.path(outd,'fedearroz_evaluation_year-month_general.parquet'), version = 'latest')
+  arrow::write_parquet(x = fdrrz_general_mth, sink = file.path(outd,'results/fedearroz/fedearroz_evaluation_year-month_general.parquet'), version = 'latest')
 } else {
-  fdrrz_general_mth <- arrow::read_parquet(file = file.path(outd,'fedearroz_evaluation_year-month_general.parquet'))
+  fdrrz_general_mth <- arrow::read_parquet(file = file.path(outd,'results/fedearroz/fedearroz_evaluation_year-month_general.parquet'))
 }
-if(!file.exists(file.path(outd,'fedearroz_evaluation_year-quarter_general.parquet'))){
+if(!file.exists(file.path(outd,'results/fedearroz/fedearroz_evaluation_year-quarter_general.parquet'))){
   fdrrz_general_qrt <- stllts_evaluation(Data = fdrrz_mrg, analysis = 'general_qrt')
-  arrow::write_parquet(x = fdrrz_general_qrt, sink = file.path(outd,'fedearroz_evaluation_year-quarter_general.parquet'), version = 'latest')
+  arrow::write_parquet(x = fdrrz_general_qrt, sink = file.path(outd,'results/fedearroz/fedearroz_evaluation_year-quarter_general.parquet'), version = 'latest')
 } else {
-  fdrrz_general_qrt <- arrow::read_parquet(file.path(outd,'fedearroz_evaluation_year-quarter_general.parquet'))
+  fdrrz_general_qrt <- arrow::read_parquet(file.path(outd,'results/fedearroz/fedearroz_evaluation_year-quarter_general.parquet'))
 }
-if(!file.exists(file.path(outd,'fedearroz_evaluation_per-month.parquet'))){
+if(!file.exists(file.path(outd,'results/fedearroz/fedearroz_evaluation_per-month.parquet'))){
   fdrrz_per_mth <- stllts_evaluation(Data = fdrrz_mrg, analysis = 'per_mth')
   fdrrz_per_mth$filter <- factor(x = fdrrz_per_mth$filter, levels = unique(fdrrz_per_mth$filter))
-  arrow::write_parquet(x = fdrrz_per_mth, sink = file.path(outd,'fedearroz_evaluation_per-month.parquet'), version = 'latest')
+  arrow::write_parquet(x = fdrrz_per_mth, sink = file.path(outd,'results/fedearroz/fedearroz_evaluation_per-month.parquet'), version = 'latest')
 } else {
-  fdrrz_per_mth <- arrow::read_parquet(file.path(outd,'fedearroz_evaluation_per-month.parquet'))
+  fdrrz_per_mth <- arrow::read_parquet(file.path(outd,'results/fedearroz/fedearroz_evaluation_per-month.parquet'))
 }
-if(!file.exists(file.path(outd,'fedearroz_evaluation_per-quarter.parquet'))){
+if(!file.exists(file.path(outd,'results/fedearroz/fedearroz_evaluation_per-quarter.parquet'))){
   fdrrz_per_qrt <- stllts_evaluation(Data = fdrrz_mrg, analysis = 'per_qrt')
   fdrrz_per_qrt$filter <- factor(x = fdrrz_per_qrt$filter, levels = c('EFM','AMJ','JAS','OND'))
-  arrow::write_parquet(x = fdrrz_per_qrt, sink = file.path(outd,'fedearroz_evaluation_per-quarter.parquet'), version = 'latest')
+  arrow::write_parquet(x = fdrrz_per_qrt, sink = file.path(outd,'results/fedearroz/fedearroz_evaluation_per-quarter.parquet'), version = 'latest')
 } else {
-  fdrrz_per_qrt <- arrow::read_parquet(file.path(outd,'fedearroz_evaluation_per-quarter.parquet'))
+  fdrrz_per_qrt <- arrow::read_parquet(file.path(outd,'results/fedearroz/fedearroz_evaluation_per-quarter.parquet'))
 }
 
-# Get elevation data
+# Cenicafe
+if(!file.exists(file.path(outd,'results/cenicafe/cenicafe_evaluation_year-month_general.parquet'))){
+  cencf_general_mth <- stllts_evaluation(Data = cencf_mrg, analysis = 'general_mth')
+  arrow::write_parquet(x = cencf_general_mth, sink = file.path(outd,'results/cenicafe/cenicafe_evaluation_year-month_general.parquet'), version = 'latest')
+} else {
+  cencf_general_mth <- arrow::read_parquet(file = file.path(outd,'results/cenicafe/cenicafe_evaluation_year-month_general.parquet'))
+}
+if(!file.exists(file.path(outd,'results/cenicafe/cenicafe_evaluation_year-quarter_general.parquet'))){
+  cencf_general_qrt <- stllts_evaluation(Data = cencf_mrg, analysis = 'general_qrt')
+  arrow::write_parquet(x = cencf_general_qrt, sink = file.path(outd,'results/cenicafe/cenicafe_evaluation_year-quarter_general.parquet'), version = 'latest')
+} else {
+  cencf_general_qrt <- arrow::read_parquet(file.path(outd,'results/cenicafe/cenicafe_evaluation_year-quarter_general.parquet'))
+}
+if(!file.exists(file.path(outd,'results/cenicafe/cenicafe_evaluation_per-month.parquet'))){
+  cencf_per_mth <- stllts_evaluation(Data = cencf_mrg, analysis = 'per_mth')
+  cencf_per_mth$filter <- factor(x = cencf_per_mth$filter, levels = unique(cencf_per_mth$filter))
+  arrow::write_parquet(x = cencf_per_mth, sink = file.path(outd,'results/cenicafe/cenicafe_evaluation_per-month.parquet'), version = 'latest')
+} else {
+  cencf_per_mth <- arrow::read_parquet(file.path(outd,'results/cenicafe/cenicafe_evaluation_per-month.parquet'))
+}
+if(!file.exists(file.path(outd,'results/cenicafe/cenicafe_evaluation_per-quarter.parquet'))){
+  cencf_per_qrt <- stllts_evaluation(Data = cencf_mrg, analysis = 'per_qrt')
+  cencf_per_qrt$filter <- factor(x = cencf_per_qrt$filter, levels = c('EFM','AMJ','JAS','OND'))
+  arrow::write_parquet(x = cencf_per_qrt, sink = file.path(outd,'results/cenicafe/cenicafe_evaluation_per-quarter.parquet'), version = 'latest')
+} else {
+  cencf_per_qrt <- arrow::read_parquet(file.path(outd,'results/cenicafe/cenicafe_evaluation_per-quarter.parquet'))
+}
+
+# IDEAM new
+if(!file.exists(file.path(outd,'results/ideam/ideamnew_evaluation_year-month_general.parquet'))){
+  ideamnew_general_mth <- stllts_evaluation(Data = ideamnew_mrg, analysis = 'general_mth')
+  arrow::write_parquet(x = ideamnew_general_mth, sink = file.path(outd,'results/ideam/ideamnew_evaluation_year-month_general.parquet'), version = 'latest')
+} else {
+  ideamnew_general_mth <- arrow::read_parquet(file = file.path(outd,'results/ideam/ideamnew_evaluation_year-month_general.parquet'))
+}
+if(!file.exists(file.path(outd,'results/ideam/ideamnew_evaluation_year-quarter_general.parquet'))){
+  ideamnew_general_qrt <- stllts_evaluation(Data = ideamnew_mrg, analysis = 'general_qrt')
+  arrow::write_parquet(x = ideamnew_general_qrt, sink = file.path(outd,'results/ideam/ideamnew_evaluation_year-quarter_general.parquet'), version = 'latest')
+} else {
+  ideamnew_general_qrt <- arrow::read_parquet(file.path(outd,'results/ideam/ideamnew_evaluation_year-quarter_general.parquet'))
+}
+if(!file.exists(file.path(outd,'results/ideam/ideamnew_evaluation_per-month.parquet'))){
+  ideamnew_per_mth <- stllts_evaluation(Data = ideamnew_mrg, analysis = 'per_mth')
+  ideamnew_per_mth$filter <- factor(x = ideamnew_per_mth$filter, levels = unique(ideamnew_per_mth$filter))
+  arrow::write_parquet(x = ideamnew_per_mth, sink = file.path(outd,'results/ideam/ideamnew_evaluation_per-month.parquet'), version = 'latest')
+} else {
+  ideamnew_per_mth <- arrow::read_parquet(file.path(outd,'results/ideam/ideamnew_evaluation_per-month.parquet'))
+}
+if(!file.exists(file.path(outd,'results/ideam/ideamnew_evaluation_per-quarter.parquet'))){
+  ideamnew_per_qrt <- stllts_evaluation(Data = ideamnew_mrg, analysis = 'per_qrt')
+  ideamnew_per_qrt$filter <- factor(x = ideamnew_per_qrt$filter, levels = c('EFM','AMJ','JAS','OND'))
+  arrow::write_parquet(x = ideamnew_per_qrt, sink = file.path(outd,'results/ideam/ideamnew_evaluation_per-quarter.parquet'), version = 'latest')
+} else {
+  ideamnew_per_qrt <- arrow::read_parquet(file.path(outd,'results/ideam/ideamnew_evaluation_per-quarter.parquet'))
+}
+
+## Get elevation data ----
 col_dem <- geodata::elevation_30s(country = 'COL', path = tempdir()) # Get Digital Elevation Model
 
 ideam_general_mth <- ideam_general_mth |> dplyr::left_join(y = ideam_unq[,c('longitude','latitude','altitud','station')], by = 'station')
@@ -435,14 +606,23 @@ fdrrz_general_mth <- fdrrz_general_mth |> dplyr::left_join(y = fdrrz_unq[,c('lon
 names(fdrrz_general_mth)[(ncol(fdrrz_general_mth)-1):ncol(fdrrz_general_mth)] <- c('longitude','latitude')
 fdrrz_general_mth$altitude <- terra::extract(x = col_dem, y = fdrrz_general_mth[,c('longitude','latitude')]) |> dplyr::pull(COL_elv_msk); rm(col_dem)
 
-# Composite index by using PCA
-get_composite_index <- function(metrics = ideam_general_mth, supplementary = fdrrz_general_mth){
+cencf_general_mth <- cencf_general_mth |> dplyr::left_join(y = cencf_unq[,c('longitud','latitud','altitud','station')], by = 'station')
+names(cencf_general_mth)[(ncol(cencf_general_mth)-2):ncol(cencf_general_mth)] <- c('longitude','latitude','altitude')
+
+ideamnew_general_mth <- ideamnew_general_mth |> dplyr::left_join(y = ideamnew_unq[,c('longitude','latitude','station','altitude')], by = 'station')
+
+## Composite index by using PCA ----
+get_composite_index <- function(metrics = ideam_general_mth,
+                                supplementary = fdrrz_general_mth,
+                                outdir = 'results/fedearroz/figures'){
   if(!is.null(supplementary)){
     # Merge both data frames (active and supplementary)
     metrics_lst <- rbind(metrics, supplementary) |>
       dplyr::select(-analysis, -filter) |>
       dplyr::group_by(source) |>
       dplyr::group_split()
+    stations_lst <- metrics_lst |> purrr::map(.f = function(dfm) dfm |> dplyr::pull(station))
+    stations_lst <- stations_lst[[which.max(unlist(purrr::map(stations_lst, length)))[1]]]
     # Metrics index
     metrics_pca_idx <- metrics_lst |>
       purrr::map(.f = function(metrics_dfm){
@@ -459,19 +639,24 @@ get_composite_index <- function(metrics = ideam_general_mth, supplementary = fdr
         pca_res <- metrics_dfm_vrs |> FactoMineR::PCA(scale.unit = T, ind.sup = spl_ids, row.w = wgs, graph = F)
         gg_pca_fll <<- factoextra::fviz_pca_var(pca_fll, col.var = 'cos2', gradient.cols = c('#00AFBB','#E7B800','#FC4E07'), repel = T)
         gg_pca_res <<- factoextra::fviz_pca_var(pca_res, col.var = 'cos2', gradient.cols = c('#00AFBB','#E7B800','#FC4E07'), repel = T)
-        ggplot2::ggsave(filename = file.path(outd,paste0('Figure_annexes_',src,'_pca_full.png')), plot = gg_pca_fll, device = 'png', width = 6, height = 6, units = 'in', dpi = 350)
-        ggplot2::ggsave(filename = file.path(outd,paste0('Figure_annexes_',src,'_pca_final.png')), plot = gg_pca_res, device = 'png', width = 6, height = 6, units = 'in', dpi = 350)
+        dir.create(path = file.path(outd,outdir), F, T)
+        ggplot2::ggsave(filename = file.path(outd,paste0(outdir,'/Figure_annexes_',src,'_pca_full.png')), plot = gg_pca_fll, device = 'png', width = 6, height = 6, units = 'in', dpi = 350)
+        ggplot2::ggsave(filename = file.path(outd,paste0(outdir,'/Figure_annexes_',src,'_pca_final.png')), plot = gg_pca_res, device = 'png', width = 6, height = 6, units = 'in', dpi = 350)
         res <- data.frame(index = as.numeric(index_cal(pca_res)))
-        names(res) <- src
+        res$station <- metrics_dfm$station
+        if (nrow(res) < length(stations_lst)) {
+          aux <- data.frame(index = NA, station = base::setdiff(stations_lst, res$station))
+          res <- rbind(res, aux); rm(aux)
+        }
+        names(res)[1] <- src
         return(res)
       }) |>
-        dplyr::bind_cols()
-      metrics_pca_idx$station <- metrics_lst[[1]] |> dplyr::pull(station)
-      metrics_pca_idx$longitude <- metrics_lst[[1]] |> dplyr::pull(longitude)
-      metrics_pca_idx$latitude  <- metrics_lst[[1]] |> dplyr::pull(latitude)
-      metrics_pca_idx$altitude  <- metrics_lst[[1]] |> dplyr::pull(altitude)
-      metrics_pca_idx[metrics_pca_idx == 50] <- NA
-      return(metrics_pca_idx)
+      purrr::reduce(dplyr::left_join, by = 'station')
+    metrics_pca_idx$longitude <- metrics_lst[[1]] |> dplyr::pull(longitude)
+    metrics_pca_idx$latitude  <- metrics_lst[[1]] |> dplyr::pull(latitude)
+    metrics_pca_idx$altitude  <- metrics_lst[[1]] |> dplyr::pull(altitude)
+    metrics_pca_idx[metrics_pca_idx == 50] <- NA
+    return(metrics_pca_idx)
   } else {
     # Split data.frame per satellite source
     metrics_lst <- metrics |>
@@ -492,8 +677,9 @@ get_composite_index <- function(metrics = ideam_general_mth, supplementary = fdr
         pca_res <- metrics_dfm_vrs |> FactoMineR::PCA(scale.unit = T, row.w = wgs, graph = F)
         gg_pca_fll <- factoextra::fviz_pca_var(pca_fll, col.var = 'cos2', gradient.cols = c('#00AFBB','#E7B800','#FC4E07'), repel = T)
         gg_pca_res <- factoextra::fviz_pca_var(pca_res, col.var = 'cos2', gradient.cols = c('#00AFBB','#E7B800','#FC4E07'), repel = T)
-        ggplot2::ggsave(filename = file.path(outd,paste0('Figure_annexes_',src,'_pca_full.png')), plot = gg_pca_fll, device = 'png', width = 6, height = 6, units = 'in', dpi = 350)
-        ggplot2::ggsave(filename = file.path(outd,paste0('Figure_annexes_',src,'_pca_final.png')), plot = gg_pca_res, device = 'png', width = 6, height = 6, units = 'in', dpi = 350)
+        dir.create(path = file.path(outd,outdir), F, T)
+        ggplot2::ggsave(filename = file.path(outd,paste0(outdir,'/Figure_annexes_',src,'_pca_full.png')), plot = gg_pca_fll, device = 'png', width = 6, height = 6, units = 'in', dpi = 350)
+        ggplot2::ggsave(filename = file.path(outd,paste0(outdir,'/Figure_annexes_',src,'_pca_final.png')), plot = gg_pca_res, device = 'png', width = 6, height = 6, units = 'in', dpi = 350)
         res <- data.frame(index = as.numeric(index_cal(pca_res)))
         names(res) <- src
         return(res)
@@ -508,14 +694,64 @@ get_composite_index <- function(metrics = ideam_general_mth, supplementary = fdr
   }
 }
 
-ideam_evaluation_mth <- get_composite_index(metrics = ideam_general_mth, supplementary = fdrrz_general_mth)
-ideam_evaluation_mth$best_source <- apply(X = ideam_evaluation_mth[,1:4], MARGIN = 1, which.max)
-ideam_evaluation_mth$best_svalue <- apply(X = ideam_evaluation_mth[,1:4], MARGIN = 1, max)
-ideam_evaluation_mth$best_source[ideam_evaluation_mth$best_source == 1] <- 'AgERA5'
-ideam_evaluation_mth$best_source[ideam_evaluation_mth$best_source == 2] <- 'CHIRPS'
-ideam_evaluation_mth$best_source[ideam_evaluation_mth$best_source == 3] <- 'IMERG'
-ideam_evaluation_mth$best_source[ideam_evaluation_mth$best_source == 4] <- 'MSWEP'
-ideam_evaluation_mth$best_source <- factor(ideam_evaluation_mth$best_source)
+ideam_fdrrz_evaluation_mth <- get_composite_index(metrics = ideam_general_mth, supplementary = fdrrz_general_mth, outdir = 'results/fedearroz/figures')
+ideam_fdrrz_evaluation_mth <- ideam_fdrrz_evaluation_mth[,c('station',base::setdiff(names(ideam_fdrrz_evaluation_mth),'station'))]
+ideam_fdrrz_evaluation_mth$best_source <- apply(X = ideam_fdrrz_evaluation_mth[,2:5], MARGIN = 1, FUN = function(x){which(x == max(x, na.rm = T))})
+ideam_fdrrz_evaluation_mth$best_svalue <- apply(X = ideam_fdrrz_evaluation_mth[,2:5], MARGIN = 1, FUN = max, na.rm = T)
+ideam_fdrrz_evaluation_mth$best_source[ideam_fdrrz_evaluation_mth$best_source == 1] <- 'AgERA5'
+ideam_fdrrz_evaluation_mth$best_source[ideam_fdrrz_evaluation_mth$best_source == 2] <- 'CHIRPS'
+ideam_fdrrz_evaluation_mth$best_source[ideam_fdrrz_evaluation_mth$best_source == 3] <- 'IMERG'
+ideam_fdrrz_evaluation_mth$best_source[ideam_fdrrz_evaluation_mth$best_source == 4] <- 'MSWEP'
+ideam_fdrrz_evaluation_mth$best_source <- factor(ideam_fdrrz_evaluation_mth$best_source)
+
+ideam_cencf_evaluation_mth <- get_composite_index(metrics = ideam_general_mth, supplementary = tidyr::drop_na(cencf_general_mth), outdir = 'results/cenicafe/figures')
+ideam_cencf_evaluation_mth <- ideam_cencf_evaluation_mth[,c('station',base::setdiff(names(ideam_cencf_evaluation_mth),'station'))]
+ideam_cencf_evaluation_mth$best_source <- apply(X = ideam_cencf_evaluation_mth[,2:5], MARGIN = 1, FUN = function(x){which(x == max(x, na.rm = T))})
+ideam_cencf_evaluation_mth$best_svalue <- apply(X = ideam_cencf_evaluation_mth[,2:5], MARGIN = 1, max, na.rm = T)
+ideam_cencf_evaluation_mth$best_source[ideam_cencf_evaluation_mth$best_source == 1] <- 'AgERA5'
+ideam_cencf_evaluation_mth$best_source[ideam_cencf_evaluation_mth$best_source == 2] <- 'CHIRPS'
+ideam_cencf_evaluation_mth$best_source[ideam_cencf_evaluation_mth$best_source == 3] <- 'IMERG'
+ideam_cencf_evaluation_mth$best_source[ideam_cencf_evaluation_mth$best_source == 4] <- 'MSWEP'
+ideam_cencf_evaluation_mth$best_source <- factor(ideam_cencf_evaluation_mth$best_source)
+
+ideam_ideamnew_evaluation_mth <- get_composite_index(metrics = ideam_general_mth, supplementary = ideamnew_general_mth, outdir = 'results/ideamnew/figures')
+ideam_ideamnew_evaluation_mth <- ideam_ideamnew_evaluation_mth[,c('station',base::setdiff(names(ideam_ideamnew_evaluation_mth),'station'))]
+ideam_ideamnew_evaluation_mth$best_source <- apply(X = ideam_ideamnew_evaluation_mth[,2:5], MARGIN = 1, FUN = function(x){which(x == max(x, na.rm = T))})
+ideam_ideamnew_evaluation_mth$best_svalue <- apply(X = ideam_ideamnew_evaluation_mth[,2:5], MARGIN = 1, max, na.rm = T)
+ideam_ideamnew_evaluation_mth$best_source[ideam_ideamnew_evaluation_mth$best_source == 1] <- 'AgERA5'
+ideam_ideamnew_evaluation_mth$best_source[ideam_ideamnew_evaluation_mth$best_source == 2] <- 'CHIRPS'
+ideam_ideamnew_evaluation_mth$best_source[ideam_ideamnew_evaluation_mth$best_source == 3] <- 'IMERG'
+ideam_ideamnew_evaluation_mth$best_source[ideam_ideamnew_evaluation_mth$best_source == 4] <- 'MSWEP'
+ideam_ideamnew_evaluation_mth$best_source <- factor(ideam_ideamnew_evaluation_mth$best_source)
+
+col_shp2 <- geodata::gadm(country = 'COL', level = 2, path = tempdir(), version = 'latest')
+col_shp2_sf <- sf::st_as_sf(col_shp2)
+
+ideam_fdrrz_evaluation_mth <- cbind(ideam_fdrrz_evaluation_mth,
+                                    terra::extract(x = col_shp2, y = ideam_fdrrz_evaluation_mth[,c('longitude','latitude')])[,c('NAME_1','NAME_2')])
+ideam_fdrrz_evaluation_mth <- ideam_fdrrz_evaluation_mth[,c('station','longitude','latitude','NAME_1','NAME_2','altitude','AgERA5','CHIRPS','IMERG','MSWEP','best_source','best_svalue')]
+names(ideam_fdrrz_evaluation_mth)[4:5] <- c('departamento','municipio')
+write.csv(x = ideam_fdrrz_evaluation_mth, file.path(outd,'results/fedearroz/fedearroz_calidad_estaciones.csv'), row.names = F, fileEncoding = 'latin1')
+
+ideam_cencf_evaluation_mth <- cbind(ideam_cencf_evaluation_mth,
+                                    terra::extract(x = col_shp2, y = ideam_cencf_evaluation_mth[,c('longitude','latitude')])[,c('NAME_1','NAME_2')])
+ideam_cencf_evaluation_mth <- ideam_cencf_evaluation_mth[,c('station','longitude','latitude','NAME_1','NAME_2','altitude','AgERA5','CHIRPS','IMERG','MSWEP','best_source','best_svalue')]
+names(ideam_cencf_evaluation_mth)[4:5] <- c('departamento','municipio')
+write.csv(x = ideam_cencf_evaluation_mth, file.path(outd,'results/cenicafe/cenicafe_calidad_estaciones.csv'), row.names = F, fileEncoding = 'latin1')
+
+ideam_ideamnew_evaluation_mth <- cbind(ideam_ideamnew_evaluation_mth,
+                                       terra::extract(x = col_shp2, y = ideam_ideamnew_evaluation_mth[,c('longitude','latitude')])[,c('NAME_1','NAME_2')])
+ideam_ideamnew_evaluation_mth <- ideam_ideamnew_evaluation_mth[,c('station','longitude','latitude','NAME_1','NAME_2','altitude','AgERA5','CHIRPS','IMERG','MSWEP','best_source','best_svalue')]
+names(ideam_ideamnew_evaluation_mth)[4:5] <- c('departamento','municipio')
+write.csv(x = ideam_ideamnew_evaluation_mth, file.path(outd,'results/ideam/ideam_full_calidad_estaciones.csv'), row.names = F, fileEncoding = 'latin1')
+
+
+
+
+
+
+
+
 
 # List of departments in which Rice and Plantain are harvested
 dpts <- c('La Guajira','Magdalena','Cesar','Sucre','Córdoba','Antioquia',
@@ -747,6 +983,21 @@ gg_sp6 <- aux |>
     ggplot2::labs(color = 'Fuente') +
   ggplot2::theme_bw()
 ggplot2::ggsave(filename = file.path(outd,'Figure_SP6.png'), plot = gg_sp6, device = 'png', width = 6, height = 4, units = 'in', dpi = 350)
+
+# Disclaimer table
+tbl2shr <- ideam_evaluation_mth[ideam_evaluation_mth$station %in% stations_in_departments,]
+rownames(tbl2shr) <- 1:nrow(tbl2shr)
+
+names(tbl2shr) <- c('AgERA5','CHIRPS','IMERG','MSWEP','Estacion','Longitud','Latitud','Altitud','Mejor_fuente','Mejor_valor')
+
+col_shp2 <- geodata::gadm(country = 'COL', level = 2, path = tempdir(), version = 'latest')
+col_shp2_sf <- sf::st_as_sf(col_shp2)
+
+stations_in_municipalities_dfm <- terra::intersect(x = col_shp2, y = terra::vect(tbl2shr, c('Longitud','Latitud'), crs = 'EPSG:4326')) |> base::as.data.frame()
+tbl2shr <- cbind(tbl2shr[,c('Longitud','Latitud')], stations_in_municipalities_dfm[,c('Estacion','NAME_1','NAME_2','Altitud','AgERA5','CHIRPS','IMERG','MSWEP','Mejor_fuente','Mejor_valor')])
+tbl2shr <- tbl2shr[,c('Estacion','Longitud','Latitud','NAME_1','NAME_2','Altitud','AgERA5','CHIRPS','IMERG','MSWEP','Mejor_fuente','Mejor_valor')]
+names(tbl2shr)[4:5] <- c('Departamento','Municipio')
+write.csv(x = tbl2shr, file.path(outd,'indice_calidad_estacion.csv'), row.names = F, fileEncoding = 'latin1')
 
 ## ------------------------------------------------------------------------------ ##
 ## ------------------------------------------------------------------------------ ##
