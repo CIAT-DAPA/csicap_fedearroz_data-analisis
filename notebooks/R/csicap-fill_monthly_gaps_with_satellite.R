@@ -84,16 +84,22 @@ impute_monthly_missing <- function(station, qlt_station, crd_station, unq_statio
   mnt_station <- mnt_station
   dates <- range(mnt_station$fecha)
   dates_seq <- seq(from = as.Date(dates[1]), to = as.Date(dates[2]), by = 'month')
-  if (nrow(mnt_station) < length(dates_seq)) {
+  if (nrow(mnt_station) < length(dates_seq) | any(is.na(mnt_station$valor_observado))) {
     # Identify temporal missing data
-    aux <- data.frame(
-      fecha = as.Date(base::setdiff(as.character(dates_seq), as.character(mnt_station$fecha))),
-      station = station,
-      valor_observado = NA
-    )
-    cat(paste0(station,' reports: ',nrow(aux),' missing data ... imputing\n'))
-    mnt_station <- rbind(mnt_station, aux); rm(aux)
-    mnt_station <- mnt_station |> dplyr::arrange(fecha)
+    mss_dts <- base::setdiff(as.character(dates_seq), as.character(mnt_station$fecha))
+    if (length(mss_dts) > 0) {
+      aux <- data.frame(
+        fecha = as.Date(mss_dts),
+        station = station,
+        valor_observado = NA
+      ); rm(mss_dts)
+      cat(paste0(station,' reports: ',nrow(aux),' missing data ... imputing\n'))
+      mnt_station <- rbind(mnt_station, aux); rm(aux)
+      mnt_station <- mnt_station |> dplyr::arrange(fecha)
+    } else {
+      cat(paste0(station,' reports: ',sum(is.na(mnt_station$valor_observado)),' missing data ... imputing\n'))
+      mnt_station <- mnt_station |> dplyr::arrange(fecha)
+    }
     # Identify best satellite data source according to the reported data
     best_source <- qlt_station[qlt_station$station == station,'best_source']
     # Source directory
