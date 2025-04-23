@@ -151,6 +151,9 @@ impute_monthly_missing <- function(station, qlt_station, crd_station, unq_statio
       rlm_fit <- MASS::rlm(valor_observado ~ valor_estimado + month, data = mnt_complete); mnt_complete
       mnt_station_mrg$robust <- mnt_station_mrg$valor_observado
       mnt_station_mrg$robust[is.na(mnt_station_mrg$valor_observado)] <- predict(rlm_fit, mnt_station_mrg)[is.na(mnt_station_mrg$valor_observado)] |> as.numeric() |> round(1)
+      if (any(mnt_station_mrg$robust < 0, na.rm = T)) {
+        mnt_station_mrg$robust[mnt_station_mrg$robust < 0] <- 0
+      }
       # Adding attributes
       mnt_station_mrg$best_source <- best_source
       mnt_station_mrg$status <- 'actual'
